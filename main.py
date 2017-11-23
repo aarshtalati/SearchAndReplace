@@ -4,7 +4,7 @@ Code adapted from CS6475 panorams main.py
 import cv2
 import os
 import errno
-
+from version_check import version
 from os import path
 
 import feature_detect as fd
@@ -59,6 +59,9 @@ def main(ref_files, image_files, output_folder):
 
 
 if __name__ == "__main__":
+
+    v = version()
+    v.check()
     """
     Read the reference and edit reference images in each subdirectory of SRC_FOLDER
     Then transfer the edits to the TGT_FOLDER images and store the output in OUT_FOLDER
