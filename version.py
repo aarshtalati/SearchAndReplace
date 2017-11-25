@@ -34,5 +34,4 @@ def check():
     check_version(sys, python_versions)
 
     if __name__ == "__main__":
-        check()
         log.info("Hint: I am hiding something")
