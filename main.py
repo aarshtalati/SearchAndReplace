@@ -92,8 +92,8 @@ if __name__ == "__main__":
 
                     print "Processing '" + image_dir + "' folder..."
 
-                    ref_files = [os.path.join(ref_dir, name) for name in ref_files]
-                    image_files = [os.path.join(dirpath, name) for name in fnames]
+                    ref_files = [os.path.join(ref_dir, name) for name in ref_files if name.lower().endswith(tuple(IMG_EXTS))]
+                    image_files = [os.path.join(dirpath, name) for name in fnames if name.lower().endswith(tuple(IMG_EXTS))]
 
                     main(ref_files, image_files, output_dir)
                 else:
