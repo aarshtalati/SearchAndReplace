@@ -1,13 +1,17 @@
 """
-Code adapted from CS6475 panorams main.py
+Code adapted from CS6475 panoramas main.py
 """
-import cv2
-import os
 import errno
-from version_check import version
-from os import path
-
+import os
+import logging
+import cv2
+import version
 import feature_detect as fd
+
+# logging
+FORMAT = "%(asctime)s  >>  %(message)s"
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+log = logging.getLogger(__name__)
 
 NUM_FEATURES = 1000
 NUM_MATCHES = 100
@@ -60,8 +64,7 @@ def main(ref_files, image_files, output_folder):
 
 if __name__ == "__main__":
 
-    v = version()
-    v.check()
+    version.check()
     """
     Read the reference and edit reference images in each subdirectory of SRC_FOLDER
     Then transfer the edits to the TGT_FOLDER images and store the output in OUT_FOLDER
@@ -69,7 +72,7 @@ if __name__ == "__main__":
 
     subfolders = os.walk(SRC_FOLDER)
     subfolders.next()  # skip the root input folder
-    for dirpath, dirnames, fnames in subfolders:
+    for dirpath, _, fnames in subfolders:
 
         if fnames != []:
             image_dir = os.path.split(dirpath)[-1]
