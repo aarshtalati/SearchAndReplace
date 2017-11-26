@@ -4,9 +4,11 @@ Code adapted from CS6475 panoramas main.py
 import errno
 import os
 import logging
+import datetime
 import cv2
 import version
 import feature_detect as fd
+import edit_detect as ed
 
 # logging
 FORMAT = "%(asctime)s  >>  %(message)s"
@@ -27,8 +29,14 @@ def main(ref_files, image_files, output_folder):
     which are stored in the output folder.
     """
 
-    src_ref_image = cv2.imread(ref_files[0])  #ref0
-    edit_ref_image = cv2.imread(ref_files[1])  #ref1
+    src_ref_image = cv2.imread(ref_files[0])  # ref0
+    edit_ref_image = cv2.imread(ref_files[1])  # ref1
+
+    # find edits
+    diff_file_name = ("diff_{0}.jpg").format(
+        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    edits = ed.findImageDifference(
+        src_ref_image, edit_ref_image, save_to_file=diff_file_name)
 
     # get features from ref image
     features = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
@@ -38,14 +46,14 @@ def main(ref_files, image_files, output_folder):
 
     # process the target images
     targets = ((name, cv2.imread(name)) for name in sorted(image_files)
-              if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
+               if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
 
     # for each target image, apply edit to the target image after finding the matching region
 
     # start with the first image in the folder and process each image in order
     name, target_img = targets.next()
     print "\n  Starting with: {}".format(name)
-    i=0
+    i = 0
     for name, next_img in targets:
         if next_img is None:
             print "\nUnable to proceed: {} failed to load.".format(name)
@@ -53,13 +61,11 @@ def main(ref_files, image_files, output_folder):
 
         print "  processing {}".format(name)
         matches = fd.getMatchingRegion()
-        edit_xfer_img = fd.transferEdit(edit_region, matches, target_img, NUM_MATCHES)
+        edit_xfer_img = fd.transferEdit(
+            edit_region, matches, target_img, NUM_MATCHES)
 
     cv2.imwrite(path.join(output_folder, "output.jpg"), edit_xfer_img)
     print "  Done!"
-
-
-
 
 
 if __name__ == "__main__":
@@ -79,9 +85,11 @@ if __name__ == "__main__":
             ref_dir = os.path.join(REF_FOLDER, image_dir)
             output_dir = os.path.join(OUT_FOLDER, image_dir)
 
-            if os.path.exists(ref_dir):  # check whether source and edit reference files are available for input dir
+            # check whether source and edit reference files are available for input dir
+            if os.path.exists(ref_dir):
 
-                ref_files = [f for f in os.listdir(ref_dir) if os.path.isfile(os.path.join(ref_dir, f))]
+                ref_files = [f for f in os.listdir(
+                    ref_dir) if os.path.isfile(os.path.join(ref_dir, f))]
 
                 if ref_files != []:
                     try:
@@ -92,8 +100,10 @@ if __name__ == "__main__":
 
                     print "Processing '" + image_dir + "' folder..."
 
-                    ref_files = [os.path.join(ref_dir, name) for name in ref_files if name.lower().endswith(tuple(IMG_EXTS))]
-                    image_files = [os.path.join(dirpath, name) for name in fnames if name.lower().endswith(tuple(IMG_EXTS))]
+                    ref_files = [os.path.join(
+                        ref_dir, name) for name in ref_files if name.lower().endswith(tuple(IMG_EXTS))]
+                    image_files = [os.path.join(
+                        dirpath, name) for name in fnames if name.lower().endswith(tuple(IMG_EXTS))]
 
                     main(ref_files, image_files, output_dir)
                 else:
