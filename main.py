@@ -33,10 +33,7 @@ def main(ref_files, image_files, output_folder):
     edit_ref_image = cv2.imread(ref_files[1])  # ref1
 
     # find edits
-    diff_file_name = ("diff_{0}.jpg").format(
-        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-    edits = ed.findImageDifference(
-        src_ref_image, edit_ref_image, save_to_file=diff_file_name)
+    edits = ed.findImageDifference(src_ref_image, edit_ref_image)
 
     # get features from ref image
     features = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
@@ -64,7 +61,9 @@ def main(ref_files, image_files, output_folder):
         edit_xfer_img = fd.transferEdit(
             edit_region, matches, target_img, NUM_MATCHES)
 
-    cv2.imwrite(path.join(output_folder, "output.jpg"), edit_xfer_img)
+    output_file_name = ("output_{0}.jpg").format(
+        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    cv2.imwrite(path.join(output_folder, output_file_name), edit_xfer_img)
     print "  Done!"
 
 
