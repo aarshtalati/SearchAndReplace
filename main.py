@@ -15,7 +15,7 @@ FORMAT = "%(asctime)s  >>  %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 log = logging.getLogger(__name__)
 
-NUM_FEATURES = 1000
+NUM_FEATURES = 100
 NUM_MATCHES = 100
 SRC_FOLDER = "albums/input"
 REF_FOLDER = "albums/ref"
@@ -39,8 +39,15 @@ def main(ref_files, image_files, output_folder):
 
     # src_ref_kp, src_ref_desc = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
     # edit_ref_kp, edit_ref_desc = fd.getFeaturesFromImage(edit_ref_image, NUM_FEATURES)
-    src_ref_kp, edit_ref_kp, matches = fd.findMatchesBetweenImages(src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES)
+    (ref_kp, ref_loc), (edit_kp, edit_loc) = fd.findMatchesBetweenImages(src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES)
 
+    album_image_feature_loc = []
+    for album_image in image_files:
+        (_, _), (_, album_loc) = fd.findMatchesBetweenImages(src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES)
+        album_image_feature_loc.append(album_loc)
+
+
+    # album_fearure_loc : contains the location of the matching features b/w a pair of source ref image and each album image
 
     # process edit region
     # edit_region = fd.getEditRegion( , edits)
@@ -49,6 +56,7 @@ def main(ref_files, image_files, output_folder):
     # process the target images
     # targets = ((name, cv2.imread(name)) for name in sorted(image_files)
     #            if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
+
 
 
     # for each target image, apply edit to the target image
