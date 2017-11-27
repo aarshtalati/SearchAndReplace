@@ -1,28 +1,60 @@
 import numpy as np
+import scipy as sp
 import scipy.signal  # one option for a 2D convolution library
 import cv2
+import utils
 
 
-def getFeaturesFromImage(image_1, nfeatures):
+def getFeaturesFromImage(image, n_features=100):
     """Return the top list of matches between two input images.
 
     Parameters
     ----------
-    image_1 : numpy.ndarray
-        The first image (can be a grayscale or color image)
+    image : numpy.ndarray
+        Theimage (can be a grayscale or color image)
 
-    nfeatures : int
+    n+features : int
         The number of features to find. If there are not enough,
         return as many matches as you can.
 
     Returns
     -------
-    image_1_kp : list<cv2.KeyPoint>
-        A list of keypoint descriptors from image_1
+    image_kp : list<cv2.KeyPoint>
+        A list of keypoint descriptors from the image
     """
-    feat_detector = cv2.ORB_create(nfeatures=500)
-    image_1_kp, image_1_desc = feat_detector.detectAndCompute(image_1, None)
-    return image_1_kp
+    feat_detector = cv2.ORB(nfeatures=n_features)
+    image_kp, image_desc = feat_detector.detectAndCompute(image, None)
+    return image_kp, image_desc
+
+
+def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=True):
+    feat_detector = cv2.ORB(nfeatures=NUM_FEATURES)
+    img_1_kp, img_1_desc = feat_detector.detectAndCompute(img1, None)
+    img_2_kp, img_2_desc = feat_detector.detectAndCompute(img2, None)
+    bfm = cv2.BFMatcher(normType=cv2.NORM_HAMMING, crossCheck=True)
+    matches = sorted(bfm.match(img_1_desc, img_2_desc),
+                     key=lambda x: x.distance)[:NUM_MATCHES]
+
+    # visualize key points
+    if visualize:
+        file_name = "keypoints-" + utils.getTimeStamp() + ".jpg"
+        # stitch images
+        h1, w1 = img1.shape[:2]
+        h2, w2 = img2.shape[:2]
+        keypoints_image = sp.zeros((max(h1, h2), w1 + w2, 3), sp.uint8)
+        keypoints_image[:h1, :w1, :] = img1
+        keypoints_image[:h2, w1:, :] = img2
+        keypoints_image[:, :, 1] = keypoints_image[:, :, 0]
+        keypoints_image[:, :, 2] = keypoints_image[:, :, 0]
+        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+        # loop through matches and draw lines b/w corresponding key points
+        for m in matches:
+            np.random.shuffle(colors)
+            color = colors[0]       
+            cv2.line(keypoints_image, (int(img_1_kp[m.queryIdx].pt[0]), int(img_1_kp[m.queryIdx].pt[1])), (int(
+                img_2_kp[m.trainIdx].pt[0] + w1), int(img_2_kp[m.trainIdx].pt[1])), color, thickness=2)
+        cv2.imwrite(file_name, keypoints_image)
+    pass
 
 
 def findHomography(image_1_kp, image_2_kp, matches):

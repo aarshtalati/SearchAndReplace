@@ -28,24 +28,31 @@ def main(ref_files, image_files, output_folder):
     folder. It then makes identifies the edit region in each of the target images and creates new output images
     which are stored in the output folder.
     """
-
     src_ref_image = cv2.imread(ref_files[0])  # ref0
     edit_ref_image = cv2.imread(ref_files[1])  # ref1
 
     # find edits
     edits = ed.findImageDifference(src_ref_image, edit_ref_image)
 
+
     # get features from ref image
-    features = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
+
+    # src_ref_kp, src_ref_desc = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
+    # edit_ref_kp, edit_ref_desc = fd.getFeaturesFromImage(edit_ref_image, NUM_FEATURES)
+    src_ref_kp, edit_ref_kp, matches = fd.findMatchesBetweenImages(src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES)
+
 
     # process edit region
-    edit_region = fd.getEditRegion()
+    # edit_region = fd.getEditRegion( , edits)
+
 
     # process the target images
-    targets = ((name, cv2.imread(name)) for name in sorted(image_files)
-               if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
+    # targets = ((name, cv2.imread(name)) for name in sorted(image_files)
+    #            if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
 
-    # for each target image, apply edit to the target image after finding the matching region
+
+    # for each target image, apply edit to the target image
+    # after finding the matching region
 
     # start with the first image in the folder and process each image in order
     name, target_img = targets.next()
