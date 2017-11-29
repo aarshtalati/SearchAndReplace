@@ -32,8 +32,9 @@ def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=Tr
     img1_kp, img1_desc = feat_detector.detectAndCompute(img1, None)
     img2_kp, img2_desc = feat_detector.detectAndCompute(img2, None)
     bfm = cv2.BFMatcher(normType=cv2.NORM_HAMMING, crossCheck=True)
-    matches = sorted(bfm.match(img1_desc, img2_desc),
-                     key=lambda x: x.distance)[:NUM_MATCHES]
+    all_matches = bfm.match(img1_desc, img2_desc)
+    matches = sorted(all_matches, key=lambda x: x.distance)
+    matches = matches[:NUM_MATCHES]
     # store feature locations
     img1_loc = [[], []]
     img2_loc = [[], []]

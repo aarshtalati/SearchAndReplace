@@ -4,6 +4,8 @@ Code adapted from CS6475 panoramas main.py
 import errno
 import os
 import logging
+import collections
+from operator import itemgetter
 import datetime
 import cv2
 import version
@@ -15,8 +17,8 @@ FORMAT = "%(asctime)s  >>  %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 log = logging.getLogger(__name__)
 
-NUM_FEATURES = 100
-NUM_MATCHES = 100
+NUM_FEATURES = 10
+NUM_MATCHES = 10
 SRC_FOLDER = "albums/input"
 REF_FOLDER = "albums/ref"
 OUT_FOLDER = "albums/output"
@@ -34,30 +36,57 @@ def main(ref_files, image_files, output_folder):
     # find edits
     edits = ed.findImageDifference(src_ref_image, edit_ref_image)
 
-
     # get features from ref image
 
     # src_ref_kp, src_ref_desc = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
     # edit_ref_kp, edit_ref_desc = fd.getFeaturesFromImage(edit_ref_image, NUM_FEATURES)
     (ref_kp, ref_loc), (edit_kp, edit_loc) = fd.findMatchesBetweenImages(src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES)
 
-    album_image_feature_loc = []
+    matches = []
+    source_ref_matches = []
     for album_image in image_files:
-        (_, _), (_, album_loc) = fd.findMatchesBetweenImages(src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES)
-        album_image_feature_loc.append(album_loc)
+        # iterate through album images
+        #  and find matches b/w src ref img and each album img
+        (src_ref_kp, src_ref_loc), (album_kp, album_loc) = fd.findMatchesBetweenImages(
+            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=False)
+
+        x = [src_ref_kp, src_ref_loc, album_kp, album_loc]
+        source_match_indices = zip(src_ref_loc[0], src_ref_loc[1])
+        source_match_indices = list(set(source_match_indices))
+        source_ref_matches += source_match_indices
+        matches.append(x)
+
+    # find a feature point which matches for each album image
+    counter = collections.Counter(source_ref_matches)
+    # counter = collections.OrderedDict(sorted(counter.items(), key=itemgetter(1)))
+    consistant_features_in_src_ref_img = [
+        k for k, v in counter.iteritems() if v == len(image_files) - 1] # -1 to discount src ref img
+
+    # find correspoding feature points in album images
+    correspondance = []
+    album_index = 0
+    for match in matches:
+        src = zip(match[1][0], match[1][1])
+        album = zip(match[3][0], match[3][1])
+        indices = [i for i, t in enumerate(src) if t in consistant_features_in_src_ref_img]
+        for index in indices:
+            x = [image_files[album_index], src[index], album[index]]
+            correspondance.append(x)
+        album_index += 1
 
 
-    # album_fearure_loc : contains the location of the matching features b/w a pair of source ref image and each album image
+
+    log.info("paused")
+
+    # album_fearure_loc : contains the location of the matching features b/w a
+    # pair of source ref image and each album image
 
     # process edit region
     # edit_region = fd.getEditRegion( , edits)
 
-
     # process the target images
     # targets = ((name, cv2.imread(name)) for name in sorted(image_files)
     #            if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
-
-
 
     # for each target image, apply edit to the target image
     # after finding the matching region
