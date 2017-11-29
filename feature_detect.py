@@ -1,6 +1,8 @@
+from operator import itemgetter
+import collections
 import numpy as np
 import scipy as sp
-import scipy.signal  # one option for a 2D convolution library
+# import scipy.signal  # one option for a 2D convolution library
 import cv2
 import utils
 
@@ -35,6 +37,7 @@ def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=Tr
     all_matches = bfm.match(img1_desc, img2_desc)
     matches = sorted(all_matches, key=lambda x: x.distance)
     matches = matches[:NUM_MATCHES]
+
     # store feature locations
     img1_loc = [[], []]
     img2_loc = [[], []]
@@ -66,6 +69,25 @@ def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=Tr
         cv2.imwrite(file_name, keypoints_image)
     return (img1_kp, np.array(img1_loc)), (img2_kp, np.array(img2_loc))
 
+def findCorrespodningFeatures(matches, source_ref_matches, image_files):
+    # find a feature point which matches for each album image
+    counter = collections.Counter(source_ref_matches)
+    # counter = collections.OrderedDict(sorted(counter.items(), key=itemgetter(1)))
+    consistant_features_in_src_ref_img = [
+        k for k, v in counter.iteritems() if v == len(image_files) - 1] # -1 to discount src ref img
+
+    # find correspoding feature points in album images
+    correspondance = []
+    album_index = 0
+    for match in matches:
+        src = zip(match[1][0], match[1][1])
+        album = zip(match[3][0], match[3][1])
+        indices = [i for i, t in enumerate(src) if t in consistant_features_in_src_ref_img]
+        for index in indices:
+            x = [image_files[album_index], src[index], album[index]]
+            correspondance.append(x)
+        album_index += 1
+    return correspondance
 
 def findHomography(image_1_kp, image_2_kp, matches):
     """Returns the homography describing the transformation between the
