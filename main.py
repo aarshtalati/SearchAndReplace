@@ -1,16 +1,22 @@
 """
-Code adapted from CS6475 panorams main.py
+Code adapted from CS6475 panoramas main.py
 """
-import cv2
-import os
 import errno
-
-from os import path
-
+import os
+import logging
+import datetime
+import cv2
+import version
 import feature_detect as fd
+import edit_detect as ed
 
-NUM_FEATURES = 1000
-NUM_MATCHES = 100
+# logging
+FORMAT = "%(asctime)s  >>  %(message)s"
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+log = logging.getLogger(__name__)
+
+NUM_FEATURES = 500
+NUM_MATCHES = 50
 SRC_FOLDER = "albums/input"
 REF_FOLDER = "albums/ref"
 OUT_FOLDER = "albums/output"
@@ -22,26 +28,55 @@ def main(ref_files, image_files, output_folder):
     folder. It then makes identifies the edit region in each of the target images and creates new output images
     which are stored in the output folder.
     """
+    src_ref_image = cv2.imread(ref_files[0])  # ref0
+    edit_ref_image = cv2.imread(ref_files[1])  # ref1
 
-    src_ref_image = cv2.imread(ref_files[0])  #ref0
-    edit_ref_image = cv2.imread(ref_files[1])  #ref1
+    # find edits
+    edits = ed.findImageDifference(src_ref_image, edit_ref_image)
 
     # get features from ref image
-    features = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
+
+    # src_ref_kp, src_ref_desc = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
+    # edit_ref_kp, edit_ref_desc = fd.getFeaturesFromImage(edit_ref_image, NUM_FEATURES)
+    (ref_kp, ref_loc), (edit_kp, edit_loc) = fd.findMatchesBetweenImages(
+        src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES, visualize=False)
+
+    matches = []
+    source_ref_matches = []
+    for album_image in image_files:
+        # iterate through album images
+        #  and find matches b/w src ref img and each album img
+        (src_ref_kp, src_ref_loc), (album_kp, album_loc) = fd.findMatchesBetweenImages(
+            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=True)
+
+        x = [src_ref_kp, src_ref_loc, album_kp, album_loc]
+        source_match_indices = zip(src_ref_loc[0], src_ref_loc[1])
+        source_match_indices = list(set(source_match_indices))
+        source_ref_matches += source_match_indices
+        matches.append(x)
+
+    correspondance = fd.findCorrespodningFeatures(
+        matches, source_ref_matches, image_files)
+
+    log.info("paused")
+
+    # album_fearure_loc : contains the location of the matching features b/w a
+    # pair of source ref image and each album image
 
     # process edit region
-    edit_region = fd.getEditRegion()
+    # edit_region = fd.getEditRegion( , edits)
 
     # process the target images
-    targets = ((name, cv2.imread(name)) for name in sorted(image_files)
-              if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
+    # targets = ((name, cv2.imread(name)) for name in sorted(image_files)
+    #            if path.splitext(name)[-1][1:].lower() in IMG_EXTS)
 
-    # for each target image, apply edit to the target image after finding the matching region
+    # for each target image, apply edit to the target image
+    # after finding the matching region
 
     # start with the first image in the folder and process each image in order
     name, target_img = targets.next()
     print "\n  Starting with: {}".format(name)
-    i=0
+    i = 0
     for name, next_img in targets:
         if next_img is None:
             print "\nUnable to proceed: {} failed to load.".format(name)
@@ -49,16 +84,18 @@ def main(ref_files, image_files, output_folder):
 
         print "  processing {}".format(name)
         matches = fd.getMatchingRegion()
-        edit_xfer_img = fd.transferEdit(edit_region, matches, target_img, NUM_MATCHES)
+        edit_xfer_img = fd.transferEdit(
+            edit_region, matches, target_img, NUM_MATCHES)
 
-    cv2.imwrite(path.join(output_folder, "output.jpg"), edit_xfer_img)
+    output_file_name = ("output_{0}.jpg").format(
+        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    cv2.imwrite(path.join(output_folder, output_file_name), edit_xfer_img)
     print "  Done!"
 
 
-
-
-
 if __name__ == "__main__":
+
+    version.check()
     """
     Read the reference and edit reference images in each subdirectory of SRC_FOLDER
     Then transfer the edits to the TGT_FOLDER images and store the output in OUT_FOLDER
@@ -66,16 +103,18 @@ if __name__ == "__main__":
 
     subfolders = os.walk(SRC_FOLDER)
     subfolders.next()  # skip the root input folder
-    for dirpath, dirnames, fnames in subfolders:
+    for dirpath, _, fnames in subfolders:
 
         if fnames != []:
             image_dir = os.path.split(dirpath)[-1]
             ref_dir = os.path.join(REF_FOLDER, image_dir)
             output_dir = os.path.join(OUT_FOLDER, image_dir)
 
-            if os.path.exists(ref_dir):  # check whether source and edit reference files are available for input dir
+            # check whether source and edit reference files are available for input dir
+            if os.path.exists(ref_dir):
 
-                ref_files = [f for f in os.listdir(ref_dir) if os.path.isfile(os.path.join(ref_dir, f))]
+                ref_files = [f for f in os.listdir(
+                    ref_dir) if os.path.isfile(os.path.join(ref_dir, f))]
 
                 if ref_files != []:
                     try:
@@ -86,8 +125,10 @@ if __name__ == "__main__":
 
                     print "Processing '" + image_dir + "' folder..."
 
-                    ref_files = [os.path.join(ref_dir, name) for name in ref_files]
-                    image_files = [os.path.join(dirpath, name) for name in fnames]
+                    ref_files = [os.path.join(
+                        ref_dir, name) for name in ref_files if name.lower().endswith(tuple(IMG_EXTS))]
+                    image_files = [os.path.join(
+                        dirpath, name) for name in fnames if name.lower().endswith(tuple(IMG_EXTS))]
 
                     main(ref_files, image_files, output_dir)
                 else:
