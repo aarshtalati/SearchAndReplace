@@ -9,7 +9,7 @@ import cv2
 import version
 import feature_detect as fd
 import edit_detect as ed
-import hcascade
+import cluster
 
 # logging
 FORMAT = "%(asctime)s  >>  %(message)s"
@@ -18,13 +18,15 @@ log = logging.getLogger(__name__)
 
 NUM_FEATURES = 500
 NUM_MATCHES = 50
+NUM_CLUSTERS = NUM_MATCHES / 10
+
 SRC_FOLDER = "albums/input"
 REF_FOLDER = "albums/ref"
 OUT_FOLDER = "albums/output"
 IMG_EXTS = set(["png", "jpeg", "jpg", "gif", "tiff", "tif", "raw", "bmp"])
 
 
-def main(ref_files, image_files, output_folder):    
+def main(ref_files, image_files, output_folder):
     """main pipe line for search and replace implementation. This reads reference images from the input
     folder. It then makes identifies the edit region in each of the target images and creates new output images
     which are stored in the output folder.
@@ -42,10 +44,10 @@ def main(ref_files, image_files, output_folder):
     (ref_kp, ref_loc), (edit_kp, edit_loc) = fd.findMatchesBetweenImages(
         src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES, visualize=False)
 
-    hcascade.fontFaceDetect(image_files[1])
-
     matches = []
     source_ref_matches = []
+    clustered = []
+
     for album_image in image_files:
         # iterate through album images
         #  and find matches b/w src ref img and each album img
@@ -57,6 +59,8 @@ def main(ref_files, image_files, output_folder):
         source_match_indices = list(set(source_match_indices))
         source_ref_matches += source_match_indices
         matches.append(x)
+
+        clustered.append((cluster.k_means_cluster(album_loc, NUM_CLUSTERS)))
 
     correspondance = fd.findCorrespodningFeatures(
         matches, source_ref_matches, image_files)
