@@ -16,8 +16,8 @@ FORMAT = "%(asctime)s  >>  %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 log = logging.getLogger(__name__)
 
-NUM_FEATURES = 500
-NUM_MATCHES = 50
+NUM_FEATURES = 5000
+NUM_MATCHES = 500
 NUM_CLUSTERS = NUM_MATCHES / 10
 
 SRC_FOLDER = "albums/input"
@@ -52,7 +52,7 @@ def main(ref_files, image_files, output_folder):
         # iterate through album images
         #  and find matches b/w src ref img and each album img
         (src_ref_kp, src_ref_loc), (album_kp, album_loc) = fd.findMatchesBetweenImages(
-            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=True)
+            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, False)
 
         x = [src_ref_kp, src_ref_loc, album_kp, album_loc]
         source_match_indices = zip(src_ref_loc[0], src_ref_loc[1])
@@ -60,6 +60,7 @@ def main(ref_files, image_files, output_folder):
         source_ref_matches += source_match_indices
         matches.append(x)
 
+        NUM_CLUSTERS = album_loc[0].size / 5
         clustered.append((cluster.k_means_cluster(album_image, album_loc, NUM_CLUSTERS, True)))
 
     correspondance = fd.findCorrespodningFeatures(
