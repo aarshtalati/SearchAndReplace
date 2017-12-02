@@ -24,7 +24,7 @@ def getFeaturesFromImage(image, n_features=100):
     image_kp : list<cv2.KeyPoint>
         A list of keypoint descriptors from the image
     """
-    feat_detector = cv2.ORB(nfeatures=n_features)
+    feat_detector = cv2.ORB_create(nfeatures=n_features)
     image_kp, image_desc = feat_detector.detectAndCompute(image, None)
     return image_kp, image_desc
 
