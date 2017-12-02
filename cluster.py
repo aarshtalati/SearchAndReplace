@@ -22,14 +22,14 @@ def k_means_cluster(img, features, K=10, visualize = False, initial_means=None):
         plt.imshow(cv2.imread(img))
 
         # Plot the cluster data
-        plt.scatter(A[:,0],A[:,1])
+        plt.scatter(A[:,0],A[:,1],c = 'b')
         plt.scatter(B[:,0],B[:,1],c = 'r')
-        plt.scatter(center[:,0],center[:,1],s = 80,c = 'y', marker = 's')
+        plt.scatter(center[:,0],center[:,1],s = 80,c = 'y', marker = 'o')
         plt.xlabel('Height'),plt.ylabel('Weight')
         plt.show()
 
         file_name = "cluster-" + img.split("/")[-1]
-        plt.savefig('cluster.jpg')
+        plt.savefig(file_name)
 
     return label, center
 
