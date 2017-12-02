@@ -9,6 +9,7 @@ import cv2
 import version
 import feature_detect as fd
 import edit_detect as ed
+import hcascade
 
 # logging
 FORMAT = "%(asctime)s  >>  %(message)s"
@@ -23,7 +24,7 @@ OUT_FOLDER = "albums/output"
 IMG_EXTS = set(["png", "jpeg", "jpg", "gif", "tiff", "tif", "raw", "bmp"])
 
 
-def main(ref_files, image_files, output_folder):
+def main(ref_files, image_files, output_folder):    
     """main pipe line for search and replace implementation. This reads reference images from the input
     folder. It then makes identifies the edit region in each of the target images and creates new output images
     which are stored in the output folder.
@@ -40,6 +41,8 @@ def main(ref_files, image_files, output_folder):
     # edit_ref_kp, edit_ref_desc = fd.getFeaturesFromImage(edit_ref_image, NUM_FEATURES)
     (ref_kp, ref_loc), (edit_kp, edit_loc) = fd.findMatchesBetweenImages(
         src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES, visualize=False)
+
+    hcascade.fontFaceDetect(image_files[1])
 
     matches = []
     source_ref_matches = []

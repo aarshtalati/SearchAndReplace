@@ -11,9 +11,9 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 log = logging.getLogger(__name__)
 
 python_versions = ["2.7."]
-np_versions = ["1.13.3"]
-sp_versions = ["0.19.1", "1.0.0"]
-cv2_versions = ["2.4.9.1", "2.4.11"]
+np_versions = ["1.13.3", "1.12.0"]
+sp_versions = ["1.0.0", "0.19.1", "0.18.1"]
+cv2_versions = ["2.4.13", "2.4.11", "2.4.9.1"]
 
 
 def check():
