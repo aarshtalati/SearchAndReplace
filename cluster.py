@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
-def k_means_cluster(features, K=10, visualize = False, initial_means=None):
+def k_means_cluster(img, features, K=10, visualize = False, initial_means=None):
 
     features = np.float32(features)
     features = np.transpose(features)
@@ -17,12 +17,19 @@ def k_means_cluster(features, K=10, visualize = False, initial_means=None):
         A = features[label.ravel()==0]
         B = features[label.ravel()==1]
 
-        # Plot the data
+        # show image
+        plt.figure()
+        plt.imshow(cv2.imread(img))
+
+        # Plot the cluster data
         plt.scatter(A[:,0],A[:,1])
         plt.scatter(B[:,0],B[:,1],c = 'r')
         plt.scatter(center[:,0],center[:,1],s = 80,c = 'y', marker = 's')
         plt.xlabel('Height'),plt.ylabel('Weight')
         plt.show()
+
+        file_name = "cluster-" + img.split("/")[-1]
+        plt.savefig('cluster.jpg')
 
     return label, center
 

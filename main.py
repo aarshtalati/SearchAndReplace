@@ -60,7 +60,7 @@ def main(ref_files, image_files, output_folder):
         source_ref_matches += source_match_indices
         matches.append(x)
 
-        clustered.append((cluster.k_means_cluster(album_loc, NUM_CLUSTERS)))
+        clustered.append((cluster.k_means_cluster(album_image, album_loc, NUM_CLUSTERS, True)))
 
     correspondance = fd.findCorrespodningFeatures(
         matches, source_ref_matches, image_files)
