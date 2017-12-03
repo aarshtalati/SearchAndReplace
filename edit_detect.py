@@ -27,8 +27,17 @@ def findImageDifference(image1, image2):
     image1 = np.asarray(image1, np.int32)
     image2 = np.asarray(image2, np.int32)
 
-    # diff = np.where(image1 == image2, 0, 255)
-    # cv2.imwrite("diff.png", diff)
+    diff = np.where(image1 == image2, 0, 255)
+    diff = diff.astype(np.uint8)
+
+    se1 = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+    se2 = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
+    mask = cv2.morphologyEx(diff, cv2.MORPH_CLOSE, se1)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, se2)
+    mask = mask / 255
+    diff = diff * mask
+
+    cv2.imwrite("diff.png", diff)
 
     xy_indices = np.where(image1 != image2)
     return xy_indices
