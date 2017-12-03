@@ -24,7 +24,7 @@ def getFeaturesFromImage(image, n_features=100):
     image_kp : list<cv2.KeyPoint>
         A list of keypoint descriptors from the image
     """
-    if hasattr(cv2, 'ORB_create') and callable(getattr(cv2, 'ORB_create'))
+    if hasattr(cv2, 'ORB_create') and callable(getattr(cv2, 'ORB_create')):
         feat_detector = cv2.ORB_create(nfeatures=n_features)
     elif hasattr(cv2, 'ORB') and callable(getattr(cv2, 'ORB')):
         feat_detector = cv2.ORB(nfeatures=n_features)
@@ -33,7 +33,7 @@ def getFeaturesFromImage(image, n_features=100):
 
 
 def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=True):
-    if hasattr(cv2, 'ORB_create') and callable(getattr(cv2, 'ORB_create'))
+    if hasattr(cv2, 'ORB_create') and callable(getattr(cv2, 'ORB_create')):
         feat_detector = cv2.ORB_create(nfeatures=NUM_FEATURES)
     elif hasattr(cv2, 'ORB') and callable(getattr(cv2, 'ORB')):
         feat_detector = cv2.ORB(nfeatures=NUM_FEATURES)
