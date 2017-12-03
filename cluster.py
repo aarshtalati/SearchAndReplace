@@ -12,7 +12,7 @@ def k_means_cluster(img, features, K=10, visualize = False, initial_means=None):
     # episilon = 1.0 and iteration = 20
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
 
-    ret,label,center=cv2.kmeans(features, K, None, criteria, 20,cv2.KMEANS_RANDOM_CENTERS)
+    ret,label,center=cv2.kmeans(features, K, None, criteria, 20, cv2.KMEANS_RANDOM_CENTERS)
 
     if (visualize):
         # Now separate the data, Note the flatten()
