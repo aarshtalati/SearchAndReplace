@@ -46,7 +46,7 @@ def main(ref_files, image_files, output_folder):
 
     matches = []
     source_ref_matches = []
-    clustered = []
+    clusters = []
 
     for album_image in image_files:
         # iterate through album images
@@ -61,7 +61,7 @@ def main(ref_files, image_files, output_folder):
         matches.append(x)
 
         NUM_CLUSTERS = album_loc[0].size / 5
-        clustered.append((cluster.k_means_cluster(album_image, album_loc, NUM_CLUSTERS, True)))
+        clusters.append((cluster.k_means_cluster(album_image, album_loc, NUM_CLUSTERS, True)))
 
     correspondance = fd.findCorrespodningFeatures(
         matches, source_ref_matches, image_files)
