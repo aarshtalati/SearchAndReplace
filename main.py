@@ -16,8 +16,8 @@ FORMAT = "%(asctime)s  >>  %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 log = logging.getLogger(__name__)
 
-NUM_FEATURES = 500
-NUM_MATCHES = 50
+NUM_FEATURES = 5000
+NUM_MATCHES = 500
 NUM_CLUSTERS = NUM_MATCHES / 10
 
 SRC_FOLDER = "albums/input"
@@ -60,7 +60,8 @@ def main(ref_files, image_files, output_folder):
         source_ref_matches += source_match_indices
         matches.append(x)
 
-        clustered.append((cluster.k_means_cluster(album_loc, NUM_CLUSTERS)))
+        NUM_CLUSTERS = album_loc[0].size / 5
+        clustered.append((cluster.k_means_cluster(album_image, album_loc, NUM_CLUSTERS, True)))
 
     correspondance = fd.findCorrespodningFeatures(
         matches, source_ref_matches, image_files)
