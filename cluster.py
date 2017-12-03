@@ -35,10 +35,11 @@ def k_means_cluster(img, features, K=10, visualize = False, initial_means=None):
 
         ax.scatter(center[:, 0], center[:, 1], s=20, c='y', marker='s')
         plt.xlabel('X'),plt.ylabel('Y')
-        plt.show()
+        # plt.show()
 
         file_name = "cluster_" + img.split("/")[-1]
-        plt.savefig(file_name)
+        fig = plt.gcf()
+        fig.savefig(file_name)
 
     return label, center
 
