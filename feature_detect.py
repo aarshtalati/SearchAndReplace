@@ -24,13 +24,19 @@ def getFeaturesFromImage(image, n_features=100):
     image_kp : list<cv2.KeyPoint>
         A list of keypoint descriptors from the image
     """
-    feat_detector = cv2.ORB(nfeatures=n_features)
+    if hasattr(cv2, 'ORB_create') and callable(getattr(cv2, 'ORB_create'))
+        feat_detector = cv2.ORB_create(nfeatures=n_features)
+    elif hasattr(cv2, 'ORB') and callable(getattr(cv2, 'ORB')):
+        feat_detector = cv2.ORB(nfeatures=n_features)
     image_kp, image_desc = feat_detector.detectAndCompute(image, None)
     return image_kp, image_desc
 
 
 def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=True):
-    feat_detector = cv2.ORB(nfeatures=NUM_FEATURES)
+    if hasattr(cv2, 'ORB_create') and callable(getattr(cv2, 'ORB_create'))
+        feat_detector = cv2.ORB_create(nfeatures=NUM_FEATURES)
+    elif hasattr(cv2, 'ORB') and callable(getattr(cv2, 'ORB')):
+        feat_detector = cv2.ORB(nfeatures=NUM_FEATURES)
     img1_kp, img1_desc = feat_detector.detectAndCompute(img1, None)
     img2_kp, img2_desc = feat_detector.detectAndCompute(img2, None)
     bfm = cv2.BFMatcher(normType=cv2.NORM_HAMMING, crossCheck=True)
