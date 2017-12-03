@@ -63,7 +63,8 @@ def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=Tr
         x1 = int(img1_kp[m.queryIdx].pt[1])
         y2 = int(img2_kp[m.trainIdx].pt[0])
         x2 = int(img2_kp[m.trainIdx].pt[1])
-        cv2.line(keypoints_image, (y1, x1), (y2 + w1, x2), color, thickness=2)
+        if visualize:
+            cv2.line(keypoints_image, (y1, x1), (y2 + w1, x2), color, thickness=2)
         img1_loc[0].append(y1)
         img1_loc[1].append(x1)
         img2_loc[0].append(y2)
