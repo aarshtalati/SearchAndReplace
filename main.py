@@ -10,6 +10,7 @@ import version
 import operator
 import math
 import numpy as np
+import scipy as sp
 import feature_detect as fd
 import edit_detect as ed
 import cluster
@@ -57,10 +58,10 @@ def main(ref_files, image_files, output_folder):
         # iterate through album images
         #  and find matches b/w src ref img and each album img
         (src_ref_kp, src_ref_loc), (album_kp, album_loc) = fd.findMatchesBetweenImages(
-            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=False)
+            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=True)
         NUM_CLUSTERS = album_loc[0].size / 5
         clusters.append((cluster.k_means_cluster(
-            album_image, album_loc, NUM_CLUSTERS, True)))
+            album_image, album_loc, NUM_CLUSTERS, visualize=False)))
 
         # find edit region
         edit_top_left_x = edits[0].min()
@@ -73,11 +74,16 @@ def main(ref_files, image_files, output_folder):
         edit_center_y = (edits[1].max() - edits[1].min()) / 2
         edit_center_x = (edits[0].max() - edits[0].min()) / 2
 
+        edit_region = edit_ref_image[edit_top_left_y:edit_bot_right_y,
+                                     edit_top_left_x:edit_bot_right_x]
+
+        cv2.imwrite('edit.png', edit_region)
+
         # draw rectangle
-        rect = src_ref_image[:, :]
-        cv2.rectangle(rect, (edit_bot_right_y, edit_bot_right_x),
-                      (edit_top_left_y, edit_top_left_x), (0, 255, 0), thickness=2)
-        cv2.imwrite('center.png', rect)
+        # rect = src_ref_image[:, :]
+        # cv2.rectangle(rect, (edit_bot_right_y, edit_bot_right_x),
+        #               (edit_top_left_y, edit_top_left_x), (0, 255, 0), thickness=2)
+        # cv2.imwrite('center.png', rect)
 
         # identify features which fall in edit region
         source_feature_points = zip(src_ref_loc[1], src_ref_loc[0])
@@ -106,25 +112,42 @@ def main(ref_files, image_files, output_folder):
         matched_feature_points_in_src_ref_img = zip(
             src_ref_loc[0], src_ref_loc[1])
 
-        temp = src_ref_image[:, :]
         for index, (x, y) in enumerate(matched_feature_points_in_src_ref_img):
             # distance between feature and edit region center in src ref img
             distances[index] = distance.euclidean(
                 (edit_center_x, edit_center_y), (x, y))
-            if index < 3:
-                cv2.circle(temp, (x, y), 25, (255, 0, 0), thickness=2)
-
-        cv2.imwrite('temp.png', temp)
 
         # get first 3 min distances for triangulation
         distances = dict(
             (sorted(distances.items(), key=operator.itemgetter(1)))[:3])
 
         approximation = {}
-        corresponding_feature_points_in_album_img = zip(
-            album_loc[0], album_loc[1])
+        corresponding_feature_points_in_album_img = zip(album_loc[0], album_loc[1])
         for k, v in distances.iteritems():
             approximation[corresponding_feature_points_in_album_img[k]] = v
+
+        # visualize matches
+
+        # img1 = cv2.imread(ref_files[0])
+        # img2 = cv2.imread(album_image)
+        # h1, w1 = img1.shape[:2]
+        # h2, w2 = img2.shape[:2]
+        # keypoints_image = sp.zeros((max(h1, h2), w1 + w2, 3), sp.uint8)
+        # keypoints_image[:h1, :w1, :] = img1
+        # keypoints_image[:h2, w1:, :] = img2
+        # keypoints_image[:, :, 1] = keypoints_image[:, :, 0]
+        # keypoints_image[:, :, 2] = keypoints_image[:, :, 0]
+        # colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+        # for k, v in distances.iteritems():
+        #     np.random.shuffle(colors)
+        #     color = colors[0]
+        #     y1 = matched_feature_points_in_src_ref_img[k][1]
+        #     x1 = matched_feature_points_in_src_ref_img[k][0]
+        #     y2 = corresponding_feature_points_in_album_img[k][1] + w1
+        #     x2 = corresponding_feature_points_in_album_img[k][0]
+        #     cv2.line(keypoints_image, (y1, x1), (y2, x2), color, thickness=2)
+        # cv2.imwrite('temp.png', keypoints_image)
+
 
         # find edit region in the target image
         p1 = np.array(list(approximation.keys()[0]))
@@ -139,10 +162,15 @@ def main(ref_files, image_files, output_folder):
         x = np.floor(x)
         x = x.astype(np.int)
 
-        crcl = cv2.imread(album_image)
-        cv2.circle(crcl, (x[0], x[1]), 25, (255, 0, 0), thickness=2)
-        cv2.imwrite('circle.png', crcl)
+        # draw circles in src ref img around the features for which we THINK we have corresponding matching features in the album image
+        # crcl = cv2.imread(album_image)
+        # cv2.circle(crcl, (x[0], x[1]), 25, (255, 0, 0), thickness=2)
+        # cv2.imwrite('circle.png', crcl)
 
+        # transfer edits
+        
+
+        # some code I tried to find the intersection of two arcs in order to find the center of the edit region in album (target) images
         # d = math.sqrt(pow((p2[0] - p1[0]), 2) + pow((p2[1] - p1[1]), 2))
         # a = ((pow(distA, 2) - pow(distB, 2) + pow(d, 2)) / (2 * d))
         # h = math.sqrt(pow(distA, 2) - pow(a, 2))
