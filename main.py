@@ -8,6 +8,7 @@ import datetime
 import cv2
 import version
 import operator
+import math
 import numpy as np
 import feature_detect as fd
 import edit_detect as ed
@@ -85,7 +86,7 @@ def main(ref_files, image_files, output_folder):
         for i, (x, y) in enumerate(source_feature_points):
             if x > edit_top_left_x and x < edit_bot_right_x and y > edit_top_left_y and y < edit_bot_right_y:
                 target_edit_points.append((x, y))
-        
+
         # identify cluster centroids which fall in edit region, also calculate euclidean distance from center of edit region
         # distances = []
         # for point in (clusters[-1][1]):
@@ -102,19 +103,22 @@ def main(ref_files, image_files, output_folder):
 
         # calculate distance from matched features to the center of the edit region
         distances = {}
-        matched_feature_points_in_src_ref_img = zip(src_ref_loc[0], src_ref_loc[1])
-        for index, (x,y) in enumerate(matched_feature_points_in_src_ref_img):
+        matched_feature_points_in_src_ref_img = zip(
+            src_ref_loc[0], src_ref_loc[1])
+        for index, (x, y) in enumerate(matched_feature_points_in_src_ref_img):
             # distance between feature and edit region center in src ref img
-            distances[index] = distance.euclidean((edit_center_x, edit_center_y), (x, y))
+            distances[index] = distance.euclidean(
+                (edit_center_x, edit_center_y), (x, y))
 
         # get first 3 min distances for triangulation
-        distances = dict((sorted(distances.items(), key=operator.itemgetter(1)))[:3])
+        distances = dict(
+            (sorted(distances.items(), key=operator.itemgetter(1)))[:3])
 
         approximation = {}
-        corresponding_feature_points_in_album_img = zip(album_loc[0], album_loc[1])
+        corresponding_feature_points_in_album_img = zip(
+            album_loc[0], album_loc[1])
         for k, v in distances.iteritems():
             approximation[corresponding_feature_points_in_album_img[k]] = v
-            
 
         # find edit region in the target image
         p1 = np.array(list(approximation.keys()[0]))
@@ -124,6 +128,22 @@ def main(ref_files, image_files, output_folder):
         distB = approximation.values()[1]
         distC = approximation.values()[2]
         x = triangulation.get_location(p1, p2, p3, distA, distB, distC)
+
+        x = np.absolute(x)
+        x = np.floor(x)
+        x = x.astype(np.int)
+
+        crcl = cv2.imread(album_image)
+        cv2.circle(crcl, (x[0], x[1]), 25, (255,0,0), thickness=2)
+        cv2.imwrite('circle.png', crcl)
+
+        # d = math.sqrt(pow((p2[0] - p1[0]), 2) + pow((p2[1] - p1[1]), 2))
+        # a = ((pow(distA, 2) - pow(distB, 2) + pow(d, 2)) / (2 * d))
+        # h = math.sqrt(pow(distA, 2) - pow(a, 2))
+        # x2 = p1[0] + (a * (p2[0] - p1[0]) / d)
+        # y2 = p1[1] + (a * (p2[1] - p1[1]) / d)
+        # x3 = x2 + (h * (p2[1] - p1[1]) / d)
+        # y3 = y2 - (h * (p2[0] - p1[0]) / d)
 
         pass
 
