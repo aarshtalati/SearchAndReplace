@@ -7,9 +7,11 @@ import logging
 import datetime
 import cv2
 import version
+import numpy as np
 import feature_detect as fd
 import edit_detect as ed
 import cluster
+from scipy.spatial import distance
 
 # logging
 FORMAT = "%(asctime)s  >>  %(message)s"
@@ -53,18 +55,57 @@ def main(ref_files, image_files, output_folder):
         #  and find matches b/w src ref img and each album img
         (src_ref_kp, src_ref_loc), (album_kp, album_loc) = fd.findMatchesBetweenImages(
             src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=False)
-
-        x = [src_ref_kp, src_ref_loc, album_kp, album_loc]
-        source_match_indices = zip(src_ref_loc[0], src_ref_loc[1])
-        source_match_indices = list(set(source_match_indices))
-        source_ref_matches += source_match_indices
-        matches.append(x)
-
         NUM_CLUSTERS = album_loc[0].size / 5
-        clusters.append((cluster.k_means_cluster(album_image, album_loc, NUM_CLUSTERS, True)))
+        clusters.append((cluster.k_means_cluster(
+            album_image, album_loc, NUM_CLUSTERS, True)))
 
-    correspondance = fd.findCorrespodningFeatures(
-        matches, source_ref_matches, image_files)
+        # find edit region
+        edit_top_left_x = edits[0].min()
+        edit_top_left_y = edits[1].min()
+
+        edit_bot_right_x = edits[0].max()
+        edit_bot_right_y = edits[1].max()
+
+        # find edit region center
+        edit_center_y = (edits[1].max() - edits[1].min()) / 2
+        edit_center_x = (edits[0].max() - edits[0].min()) / 2
+
+        # draw rectangle
+        rect = src_ref_image[:, :]
+        cv2.rectangle(rect, (edit_bot_right_y, edit_bot_right_x),
+                      (edit_top_left_y, edit_top_left_x), (255, 0, 0), thickness=2)
+        cv2.imwrite('center.png', rect)
+
+        # identify features which fall in edit region
+        source_feature_points = zip(src_ref_loc[1], src_ref_loc[0])
+        target_edit_points = []
+
+        for i, (x, y) in enumerate(source_feature_points):
+            if x > edit_top_left_x and x < edit_bot_right_x and y > edit_top_left_y and y < edit_bot_right_y:
+                target_edit_points.append((x, y))
+        
+        # identify cluster centroids which fall in edit region, also calculate euclidean distance from center of edit region
+        # distances = []
+        # for point in (clusters[-1][1]):
+
+        #     distances.append(distance.euclidean((edit_center_x, edit_center_y), (point[0], point[1])))
+
+        #     p1 = np.floor(point)
+        #     p2 = np.ceil(point)
+        #     if p1[0] > edit_top_left_x and p1[0] < edit_bot_right_x and p1[1] > edit_top_left_y and p1[1] < edit_bot_right_y:
+        #         target_edit_points.append((p1[0], p1[1]))
+        #     elif p2[0] > edit_top_left_x and p2[0] < edit_bot_right_x and p2[1] > edit_top_left_y and p2[1] < edit_bot_right_y:
+        #         target_edit_points.append((p2[0], p2[1]))
+        # pass
+
+        # calculate distance from matched features to the center of the edit region
+        distances = []
+        matched_feature_points_in_src_ref_img = zip(src_ref_loc[0], src_ref_loc[1])
+        for i, (x,y) in enumerate(matched_feature_points_in_src_ref_img):
+            distances.append(distance.euclidean((edit_center_x, edit_center_y), (x, y)))
+        distances.sort()
+
+        # find edit region in the target image
 
     log.info("paused")
 
