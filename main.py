@@ -58,7 +58,7 @@ def main(ref_files, image_files, output_folder):
         # iterate through album images
         #  and find matches b/w src ref img and each album img
         (src_ref_kp, src_ref_loc), (album_kp, album_loc) = fd.findMatchesBetweenImages(
-            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=True)
+            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=False)
         NUM_CLUSTERS = album_loc[0].size / 5
         clusters.append((cluster.k_means_cluster(
             album_image, album_loc, NUM_CLUSTERS, visualize=False)))
@@ -122,7 +122,8 @@ def main(ref_files, image_files, output_folder):
             (sorted(distances.items(), key=operator.itemgetter(1)))[:3])
 
         approximation = {}
-        corresponding_feature_points_in_album_img = zip(album_loc[0], album_loc[1])
+        corresponding_feature_points_in_album_img = zip(
+            album_loc[0], album_loc[1])
         for k, v in distances.iteritems():
             approximation[corresponding_feature_points_in_album_img[k]] = v
 
@@ -148,7 +149,6 @@ def main(ref_files, image_files, output_folder):
         #     cv2.line(keypoints_image, (y1, x1), (y2, x2), color, thickness=2)
         # cv2.imwrite('temp.png', keypoints_image)
 
-
         # find edit region in the target image
         p1 = np.array(list(approximation.keys()[0]))
         p2 = np.array(list(approximation.keys()[1]))
@@ -168,18 +168,24 @@ def main(ref_files, image_files, output_folder):
         # cv2.imwrite('circle.png', crcl)
 
         # transfer edits
-        
+        edit_width = edit_bot_right_x - edit_top_left_x
+        edit_height = edit_bot_right_y - edit_top_left_y
 
-        # some code I tried to find the intersection of two arcs in order to find the center of the edit region in album (target) images
-        # d = math.sqrt(pow((p2[0] - p1[0]), 2) + pow((p2[1] - p1[1]), 2))
-        # a = ((pow(distA, 2) - pow(distB, 2) + pow(d, 2)) / (2 * d))
-        # h = math.sqrt(pow(distA, 2) - pow(a, 2))
-        # x2 = p1[0] + (a * (p2[0] - p1[0]) / d)
-        # y2 = p1[1] + (a * (p2[1] - p1[1]) / d)
-        # x3 = x2 + (h * (p2[1] - p1[1]) / d)
-        # y3 = y2 - (h * (p2[0] - p1[0]) / d)
+        target_min_x = int(math.floor(x[0] - (edit_width / 2.0)))
+        target_max_x = int(math.floor(x[0] + (edit_width / 2.0)))
 
-        pass
+        target_min_y = int(math.floor(x[1] - (edit_height / 2.0)))
+        target_max_y = int(math.floor(x[1] + (edit_height / 2.0)))
+
+        edited_album_img = cv2.imread(album_image)
+        edited_album_img[target_min_y:target_max_y,
+                         target_min_x:target_max_x,:] = edit_region
+
+        output_file_name = ("output_{0}.png").format(
+            image_files.index(album_image))
+
+
+        cv2.imwrite(output_file_name, edited_album_img)
 
     log.info("paused")
 
