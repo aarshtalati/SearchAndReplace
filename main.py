@@ -76,7 +76,7 @@ def main(ref_files, image_files, output_folder):
         # draw rectangle
         rect = src_ref_image[:, :]
         cv2.rectangle(rect, (edit_bot_right_y, edit_bot_right_x),
-                      (edit_top_left_y, edit_top_left_x), (255, 0, 0), thickness=2)
+                      (edit_top_left_y, edit_top_left_x), (0, 255, 0), thickness=2)
         cv2.imwrite('center.png', rect)
 
         # identify features which fall in edit region
@@ -105,10 +105,16 @@ def main(ref_files, image_files, output_folder):
         distances = {}
         matched_feature_points_in_src_ref_img = zip(
             src_ref_loc[0], src_ref_loc[1])
+
+        temp = src_ref_image[:, :]
         for index, (x, y) in enumerate(matched_feature_points_in_src_ref_img):
             # distance between feature and edit region center in src ref img
             distances[index] = distance.euclidean(
                 (edit_center_x, edit_center_y), (x, y))
+            if index < 3:
+                cv2.circle(temp, (x, y), 25, (255, 0, 0), thickness=2)
+
+        cv2.imwrite('temp.png', temp)
 
         # get first 3 min distances for triangulation
         distances = dict(
@@ -134,7 +140,7 @@ def main(ref_files, image_files, output_folder):
         x = x.astype(np.int)
 
         crcl = cv2.imread(album_image)
-        cv2.circle(crcl, (x[0], x[1]), 25, (255,0,0), thickness=2)
+        cv2.circle(crcl, (x[0], x[1]), 25, (255, 0, 0), thickness=2)
         cv2.imwrite('circle.png', crcl)
 
         # d = math.sqrt(pow((p2[0] - p1[0]), 2) + pow((p2[1] - p1[1]), 2))
