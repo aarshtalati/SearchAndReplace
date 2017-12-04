@@ -1,9 +1,8 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-import feature_detect as fd
 
-def k_means_cluster(img, src_features, features, K=10, visualize = False, initial_means=None):
+def k_means_cluster(img, features, K=10, visualize = False, initial_means=None):
 
     img_rgb = cv2.cvtColor(cv2.imread(img), cv2.COLOR_BGR2RGB)
     features = np.float32(features)

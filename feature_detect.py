@@ -69,10 +69,6 @@ def findMatchesBetweenImages(img1, img2, NUM_FEATURES, NUM_MATCHES, visualize=Tr
         img1_loc[1].append(x1)
         img2_loc[0].append(y2)
         img2_loc[1].append(x2)
-
-    # get the affine frames of each individual feature
-    # hs = findHomography(img1_kp, img2_kp, matches)
-
     # visualize key points
     if visualize:
         file_name = "keypoints-" + utils.getTimeStamp() + ".jpg"
@@ -145,16 +141,12 @@ def findHomography(image_1_kp, image_2_kp, matches):
     """
     image_1_points = np.zeros((len(matches), 1, 2), dtype=np.float32)
     image_2_points = np.zeros((len(matches), 1, 2), dtype=np.float32)
-    hs = []
+
     for i in range(len(matches)):
         image_1_points[i] = image_1_kp[matches[i].queryIdx].pt
         image_2_points[i] = image_2_kp[matches[i].trainIdx].pt
 
-        hm, mask = cv2.findHomography(image_1_points[i], image_2_points[i],
-                                          method=cv2.RANSAC, ransacReprojThreshold=5.0)
-        hs.append(hm)
-    """
     homography, mask = cv2.findHomography(image_1_points, image_2_points,
                                           method=cv2.RANSAC, ransacReprojThreshold=5.0)
-    """
-    return hs  # mask is ignored
+
+    return homography  # mask is ignored
