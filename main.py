@@ -7,10 +7,12 @@ import logging
 import datetime
 import cv2
 import version
+import operator
 import numpy as np
 import feature_detect as fd
 import edit_detect as ed
 import cluster
+import triangulation
 from scipy.spatial import distance
 
 # logging
@@ -99,13 +101,31 @@ def main(ref_files, image_files, output_folder):
         # pass
 
         # calculate distance from matched features to the center of the edit region
-        distances = []
+        distances = {}
         matched_feature_points_in_src_ref_img = zip(src_ref_loc[0], src_ref_loc[1])
-        for i, (x,y) in enumerate(matched_feature_points_in_src_ref_img):
-            distances.append(distance.euclidean((edit_center_x, edit_center_y), (x, y)))
-        distances.sort()
+        for index, (x,y) in enumerate(matched_feature_points_in_src_ref_img):
+            # distance between feature and edit region center in src ref img
+            distances[index] = distance.euclidean((edit_center_x, edit_center_y), (x, y))
+
+        # get first 3 min distances for triangulation
+        distances = dict((sorted(distances.items(), key=operator.itemgetter(1)))[:3])
+
+        approximation = {}
+        corresponding_feature_points_in_album_img = zip(album_loc[0], album_loc[1])
+        for k, v in distances.iteritems():
+            approximation[corresponding_feature_points_in_album_img[k]] = v
+            
 
         # find edit region in the target image
+        p1 = np.array(list(approximation.keys()[0]))
+        p2 = np.array(list(approximation.keys()[1]))
+        p3 = np.array(list(approximation.keys()[2]))
+        distA = approximation.values()[0]
+        distB = approximation.values()[1]
+        distC = approximation.values()[2]
+        x = triangulation.get_location(p1, p2, p3, distA, distB, distC)
+
+        pass
 
     log.info("paused")
 
