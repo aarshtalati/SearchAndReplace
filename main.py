@@ -15,6 +15,7 @@ import feature_detect as fd
 import edit_detect as ed
 import cluster
 import triangulation
+import utils
 from scipy.spatial import distance
 
 # logging
@@ -48,7 +49,7 @@ def main(ref_files, image_files, output_folder):
     # src_ref_kp, src_ref_desc = fd.getFeaturesFromImage(src_ref_image, NUM_FEATURES)
     # edit_ref_kp, edit_ref_desc = fd.getFeaturesFromImage(edit_ref_image, NUM_FEATURES)
     (ref_kp, ref_loc), (edit_kp, edit_loc) = fd.findMatchesBetweenImages(
-        src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES, visualize=False)
+        src_ref_image, edit_ref_image, NUM_FEATURES, NUM_MATCHES, visualize=True)
 
     matches = []
     source_ref_matches = []
@@ -58,10 +59,10 @@ def main(ref_files, image_files, output_folder):
         # iterate through album images
         #  and find matches b/w src ref img and each album img
         (src_ref_kp, src_ref_loc), (album_kp, album_loc) = fd.findMatchesBetweenImages(
-            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=False)
+            src_ref_image, cv2.imread(album_image), NUM_FEATURES, NUM_MATCHES, visualize=True)
         NUM_CLUSTERS = album_loc[0].size / 5
         clusters.append((cluster.k_means_cluster(
-            album_image, album_loc, NUM_CLUSTERS, visualize=False)))
+            album_image, album_loc, NUM_CLUSTERS, visualize=True)))
 
         # find edit region
         edit_top_left_x = edits[0].min()
@@ -181,13 +182,9 @@ def main(ref_files, image_files, output_folder):
         edited_album_img[target_min_y:target_max_y,
                          target_min_x:target_max_x,:] = edit_region
 
-        output_file_name = ("output_{0}.png").format(
-            image_files.index(album_image))
-
-
+        output_file_name = "output_" + utils.getTimeStamp() + ".png"
         cv2.imwrite(output_file_name, edited_album_img)
 
-    log.info("paused")
 
     # album_fearure_loc : contains the location of the matching features b/w a
     # pair of source ref image and each album image
@@ -202,24 +199,6 @@ def main(ref_files, image_files, output_folder):
     # for each target image, apply edit to the target image
     # after finding the matching region
 
-    # start with the first image in the folder and process each image in order
-    name, target_img = targets.next()
-    print "\n  Starting with: {}".format(name)
-    i = 0
-    for name, next_img in targets:
-        if next_img is None:
-            print "\nUnable to proceed: {} failed to load.".format(name)
-            return
-
-        print "  processing {}".format(name)
-        matches = fd.getMatchingRegion()
-        edit_xfer_img = fd.transferEdit(
-            edit_region, matches, target_img, NUM_MATCHES)
-
-    output_file_name = ("output_{0}.jpg").format(
-        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-    cv2.imwrite(path.join(output_folder, output_file_name), edit_xfer_img)
-    print "  Done!"
 
 
 if __name__ == "__main__":
